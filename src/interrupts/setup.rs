@@ -16,6 +16,8 @@ lazy_static! {
         let mut idt = InterruptDescriptorTable::new();
         idt.breakpoint
             .set_handler_fn(super::breakpoint::breakpoint_handler);
+        idt.page_fault
+            .set_handler_fn(super::page_fault::page_fault_handler);
         unsafe {
             idt.double_fault
                 .set_handler_fn(super::double_fault::double_fault_handler)
