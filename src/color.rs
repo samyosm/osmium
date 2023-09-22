@@ -32,6 +32,6 @@ impl ColorCode {
 
 impl Default for ColorCode {
     fn default() -> Self {
-        ColorCode::new(Color::White, Color::Black)
+        ColorCode::new(Color::LightGreen, Color::Black)
     }
 }
