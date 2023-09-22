@@ -43,7 +43,13 @@ impl Terminal {
     fn write_char(&mut self, x: usize, y: usize, byte: u8) {
         self.buffer[y][x] = ScreenChar {
             byte,
-            color_code: self.color,
+            color_code: match byte {
+                // " $ % ' ( ) * + , - . / : ; < = > ? @  [ \ ] ^ _  { | } ~
+                0x22..=0x40 | 0x5b..=0x5f | 0x7b..=0x7e => {
+                    ColorCode::new(Color::LightCyan, Color::Black)
+                }
+                _ => self.color,
+            },
         };
     }
 

@@ -4,4 +4,6 @@ pub mod setup;
 mod breakpoint;
 mod double_fault;
 mod keyboard;
+mod page_fault;
 mod timer;
+
