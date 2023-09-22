@@ -27,19 +27,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
 
 [[package]]
-name = "blog_os"
-version = "0.1.0"
-dependencies = [
- "bootloader",
- "lazy_static",
- "pc-keyboard",
- "pic8259",
- "spin 0.9.8",
- "uart_16550",
- "x86_64",
-]
-
-[[package]]
 name = "bootloader"
 version = "0.9.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -62,6 +49,19 @@ checksum = "c1cc9717a20b1bb222f333e6a92fd32f7d8a18ddc5a3191a11af45dcbf4dcd16"
 dependencies = [
  "autocfg",
  "scopeguard",
+]
+
+[[package]]
+name = "osmium"
+version = "0.1.0"
+dependencies = [
+ "bootloader",
+ "lazy_static",
+ "pc-keyboard",
+ "pic8259",
+ "spin 0.9.8",
+ "uart_16550",
+ "x86_64",
 ]
 
 [[package]]

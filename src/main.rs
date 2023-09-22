@@ -9,12 +9,11 @@
 mod color;
 pub mod gdt;
 pub mod interrupts;
+mod panic;
 mod utils;
 mod write;
 
 use interrupts::setup;
-
-use core::panic::PanicInfo;
 
 pub fn init() {
     gdt::init();
@@ -49,11 +48,4 @@ fn test_runner(tests: &[&dyn Fn()]) {
     }
 
     // exit_qemu(QemuExitCode::Success); // TODO: Implement printing to the host console
-}
-
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    eprintln!("{}", info);
-
-    hlt_loop();
 }
