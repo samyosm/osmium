@@ -4,28 +4,24 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use x86_64::instructions::interrupts;
 
-use crate::write::Terminal;
+use crate::terminal::{
+    input::TerminalInput,
+    output::{Output, TerminalOutput},
+};
 
 /* Singleton */
+// TODO: Stop hard coding
 lazy_static! {
-    pub static ref WRITER: Mutex<Terminal> = Mutex::new(Terminal::new());
-}
-
-#[doc(hidden)]
-pub enum Output {
-    Std,
-    Err,
+    pub static ref INPUT: Mutex<TerminalInput> = Mutex::new(TerminalInput::new());
+    pub static ref OUTPUT: Mutex<TerminalOutput> = Mutex::new(TerminalOutput::new());
 }
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments, output: Output, new_line: bool) {
     interrupts::without_interrupts(|| {
-        match output {
-            Output::Std => WRITER.lock().print(args),
-            Output::Err => WRITER.lock().eprint(args),
-        };
+        OUTPUT.lock().print(args, output);
         if new_line {
-            WRITER.lock().new_line();
+            OUTPUT.lock().new_line();
         }
     })
 }
@@ -34,27 +30,27 @@ pub fn _print(args: fmt::Arguments, output: Output, new_line: bool) {
 #[macro_export]
 macro_rules! println {
     ($($arg:tt)*) => {
-        $crate::utils::write_macros::_print(format_args!($($arg)*), $crate::utils::write_macros::Output::Std, true)
+        $crate::utils::write_macros::_print(format_args!($($arg)*), crate::terminal::output::Output::Std, true)
     }
 }
 
 #[macro_export]
 macro_rules! eprintln {
     ($($arg:tt)*) => {
-        $crate::utils::write_macros::_print(format_args!($($arg)*), $crate::utils::write_macros::Output::Err, true)
+        $crate::utils::write_macros::_print(format_args!($($arg)*), crate::terminal::output::Output::Err, true)
     }
 }
 
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {
-        $crate::utils::write_macros::_print(format_args!($($arg)*), $crate::write::Output::Std, false)
+        $crate::utils::write_macros::_print(format_args!($($arg)*), crate::terminal::output::Output::Std, false)
     }
 }
 
 #[macro_export]
 macro_rules! eprint {
     ($($arg:tt)*) => {
-        $crate::utils::write_macros::_print(format_args!($($arg)*), $crate::write::Output::Err, new_line: false)
+        $crate::utils::write_macros::_print(format_args!($($arg)*), crate::terminal::output::Output::Err, false)
     }
 }

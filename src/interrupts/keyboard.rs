@@ -1,12 +1,17 @@
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use x86_64::structures::idt::InterruptStackFrame;
 
 use crate::{
+    events,
     interrupts::setup::{InterruptIndex, PICS},
-    utils::write_macros::WRITER,
 };
 
 use spin::Mutex;
+
+lazy_static! {
+    pub static ref KEYBOARD_EVENT_LISTENERS: Mutex<Vec<fn(char) -> ()>> = Mutex::new(vec![]);
+}
 
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
@@ -29,7 +34,7 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: Interrupt
         if let Some(key) = keyboard.process_keyevent(key_event) {
             match key {
                 DecodedKey::Unicode(char) => {
-                    WRITER.lock().input_char(char as u8);
+                    events::keyboard::keyboard_event_handler(char);
                 }
                 // Keys like LShift, RShift, Ctrl...
                 DecodedKey::RawKey(_key) => {}
