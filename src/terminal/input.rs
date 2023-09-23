@@ -1,14 +1,11 @@
-use crate::{eprint, print, println, utils::write_macros::OUTPUT};
+use crate::{commands, eprintln, print, println};
 
+use alloc::string::String;
 use x86_64::instructions::port::Port;
 
 unsafe fn outb(port: u16, value: u16) {
     let mut port = Port::new(port);
     port.write(value);
-}
-
-unsafe fn inb(port: u16) -> u16 {
-    Port::new(port).read()
 }
 
 use super::{
@@ -67,16 +64,20 @@ impl TerminalInput {
             // New Line (Enter Key)
             b'\n' => {
                 // TODO: Call a command instead of this debug thingy
-                print!("Terminal: ");
+                print!("$: ");
+                let mut input = String::new();
                 for col in 0..BUFFER_WIDTH {
-                    print!("{}", self.getx(col).byte as char);
+                    input.push(self.getx(col).byte as char);
                     self.setx(col, SPACE_SCREEN_CHAR);
                 }
-                print!("\n");
+
+                println!("{}", input);
+                // Triming is necessary because most of the input is 0s
+                commands::handle_input(input.trim());
                 self.x = 0;
             }
             // Unimplemented
-            _ => eprint!("unimplemented."),
+            _ => eprintln!("Input: Unimplemented."),
         }
         // TODO: Put into a function
         unsafe {
