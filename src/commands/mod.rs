@@ -1,4 +1,6 @@
 mod command;
+mod echo;
+mod exit;
 mod handler;
 mod time;
 

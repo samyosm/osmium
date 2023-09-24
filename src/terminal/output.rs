@@ -1,7 +1,9 @@
 use core::fmt::{self, Arguments, Write};
 
+use spin::{Mutex, MutexGuard, Once};
+
 use super::{
-    color::{DEFAULT_COLOR, ERROR_COLOR, NUMBER_COLOR},
+    color::ERROR_COLOR,
     screen_char::{ScreenChar, SPACE_SCREEN_CHAR},
     vga_text::{VGAText, BUFFER_WIDTH},
 };
@@ -29,7 +31,14 @@ impl VGAText for TerminalOutput {
     const RANGE: core::ops::Range<usize> = 0..24;
 }
 
+static OUTPUT: Once<Mutex<TerminalOutput>> = Once::new();
+
 impl TerminalOutput {
+    pub fn global() -> MutexGuard<'static, TerminalOutput> {
+        OUTPUT
+            .call_once(|| Mutex::new(TerminalOutput::new()))
+            .lock()
+    }
     pub fn new() -> Self {
         Self {
             x: 0,
@@ -41,14 +50,11 @@ impl TerminalOutput {
         self.set(
             x,
             y,
-            ScreenChar {
-                byte,
-                color_code: match byte {
-                    b'0'..=b'9' => NUMBER_COLOR,
-                    _ => match self.output {
-                        Output::Std => DEFAULT_COLOR,
-                        Output::Err => ERROR_COLOR,
-                    },
+            match self.output {
+                Output::Std => ScreenChar::highlighted(byte),
+                Output::Err => ScreenChar {
+                    byte,
+                    color_code: ERROR_COLOR,
                 },
             },
         );

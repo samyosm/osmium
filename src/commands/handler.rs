@@ -1,10 +1,8 @@
-use alloc::{boxed::Box, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use hashbrown::HashMap;
 use lazy_static::lazy_static;
 
-use crate::utils::qemu;
-
-use super::command::{Command, ExitCommand, LsCommand};
+use super::command::Command;
 
 type CommandExecute = fn(Vec<&str>);
 struct CommandRegistry {
@@ -21,6 +19,7 @@ impl CommandRegistry {
     pub fn push<T: Command>(&mut self) {
         self.map.insert(T::name(), T::parse_and_execute);
     }
+
     pub fn get<T: Into<String>>(&self, name: T) -> Option<&CommandExecute> {
         self.map.get(&name.into())
     }
@@ -29,9 +28,9 @@ impl CommandRegistry {
 lazy_static! {
     static ref COMMANDS: CommandRegistry = {
         let mut map: CommandRegistry = CommandRegistry::new();
-        map.push::<LsCommand>();
-        map.push::<ExitCommand>();
         map.push::<super::time::TimeCommand>();
+        map.push::<super::exit::ExitCommand>();
+        map.push::<super::echo::EchoCommand>();
 
         map
     };
@@ -43,9 +42,5 @@ pub fn handle_input(input: &str) {
         if let Some(command) = COMMANDS.get(arg) {
             command(args);
         }
-    }
-    match input.trim() {
-        "qemu-exit" | "qe" => qemu::exit_qemu(qemu::QemuExitCode::Success),
-        _ => {}
     }
 }
