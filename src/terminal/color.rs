@@ -1,6 +1,7 @@
-pub const DEFAULT_COLOR: ColorCode = ColorCode::new(Color::LightGreen, Color::Black);
-pub const ERROR_COLOR: ColorCode = ColorCode::new(Color::LightRed, Color::Black);
-pub const NUMBER_COLOR: ColorCode = ColorCode::new(Color::LightCyan, Color::Black);
+pub const DEFAULT_COLOR: ColorCode = ColorCode::with_black_bg(Color::LightGreen);
+pub const ERROR_COLOR: ColorCode = ColorCode::with_black_bg(Color::LightRed);
+pub const NUMBER_COLOR: ColorCode = ColorCode::with_black_bg(Color::LightCyan);
+pub const HIGHLIGHT_COLOR: ColorCode = ColorCode::with_black_bg(Color::Yellow);
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,8 +30,12 @@ pub enum Color {
 pub struct ColorCode(pub u8);
 
 impl ColorCode {
-    pub const fn new(foreground: Color, background: Color) -> ColorCode {
+    pub const fn new(foreground: Color, background: Color) -> Self {
         ColorCode((background as u8) << 4 | (foreground as u8))
+    }
+
+    pub const fn with_black_bg(foreground: Color) -> Self {
+        ColorCode::new(foreground, Color::Black)
     }
 }
 

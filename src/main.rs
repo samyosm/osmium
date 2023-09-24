@@ -14,6 +14,7 @@ mod terminal;
 mod utils;
 
 pub mod allocator;
+pub mod commands;
 pub mod events;
 pub mod gdt;
 pub mod interrupts;

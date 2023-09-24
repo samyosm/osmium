@@ -1,5 +1,7 @@
-use crate::{eprint, print, println, utils::write_macros::OUTPUT};
+use crate::{commands, eprintln, print, println};
 
+use alloc::string::String;
+use spin::{Mutex, Once};
 use x86_64::instructions::port::Port;
 
 unsafe fn outb(port: u16, value: u16) {
@@ -7,12 +9,7 @@ unsafe fn outb(port: u16, value: u16) {
     port.write(value);
 }
 
-unsafe fn inb(port: u16) -> u16 {
-    Port::new(port).read()
-}
-
 use super::{
-    color::DEFAULT_COLOR,
     screen_char::{ScreenChar, SPACE_SCREEN_CHAR},
     vga_text::{VGAText, BUFFER_WIDTH},
 };
@@ -25,17 +22,66 @@ impl VGAText for TerminalInput {
     const RANGE: core::ops::Range<usize> = 24..25;
 }
 
+const LABEL_SIZE: usize = 12;
+
+static INPUT: Once<Mutex<TerminalInput>> = Once::new();
+
 impl TerminalInput {
+    pub fn global() -> spin::MutexGuard<'static, TerminalInput> {
+        INPUT.call_once(|| Mutex::new(TerminalInput::new())).lock()
+    }
+
     pub fn new() -> Self {
         TerminalInput { x: 0 }
     }
 
     fn setx(&self, x: usize, char: ScreenChar) {
-        self.set(x, Self::START, char);
+        self.set(x + LABEL_SIZE, Self::START, char);
     }
 
     fn getx(&self, x: usize) -> ScreenChar {
         self.get(x, Self::START)
+    }
+
+    fn clear(&self) {
+        for col in LABEL_SIZE..BUFFER_WIDTH {
+            self.set(col, Self::START, SPACE_SCREEN_CHAR);
+        }
+    }
+
+    fn get_input(&self) -> String {
+        let mut input = String::new();
+        for col in LABEL_SIZE..BUFFER_WIDTH {
+            input.push(self.getx(col).byte as char);
+        }
+        input
+    }
+
+    fn get_label(&self) -> String {
+        let mut input = String::new();
+        for col in 0..LABEL_SIZE {
+            input.push(self.getx(col).byte as char);
+        }
+        input
+    }
+
+    pub fn set_label(&self, label: &str) {
+        if label.len() == LABEL_SIZE {
+            for (i, c) in label.char_indices() {
+                self.set(i, Self::START, ScreenChar::highlighted(c as u8));
+            }
+        }
+    }
+
+    fn update_caret(&self) {
+        unsafe {
+            let pos = (24 * 80 + self.x + LABEL_SIZE) as u16;
+            outb(0x3D4, 0x0F);
+            outb(0x3D5, pos & 0xFF);
+
+            outb(0x3D4, 0x0E);
+            outb(0x3D5, (pos >> 8) & 0xFF);
+        }
     }
 
     pub fn input_char(&mut self, byte: u8) {
@@ -55,37 +101,23 @@ impl TerminalInput {
                     return;
                 }
 
-                self.setx(
-                    self.x,
-                    ScreenChar {
-                        byte,
-                        color_code: DEFAULT_COLOR,
-                    },
-                );
+                self.setx(self.x, ScreenChar::highlighted(byte));
                 self.x += 1;
             }
             // New Line (Enter Key)
             b'\n' => {
-                // TODO: Call a command instead of this debug thingy
-                print!("Terminal: ");
-                for col in 0..BUFFER_WIDTH {
-                    print!("{}", self.getx(col).byte as char);
-                    self.setx(col, SPACE_SCREEN_CHAR);
-                }
-                print!("\n");
+                print!("{}", self.get_label());
+                let input = self.get_input();
+                self.clear();
+                println!("{}", input);
+                // Triming is necessary because most of the input is 0s
+                commands::handle_input(input.trim());
                 self.x = 0;
             }
             // Unimplemented
-            _ => eprint!("unimplemented."),
+            _ => eprintln!("Input: Unimplemented."),
         }
-        // TODO: Put into a function
-        unsafe {
-            let pos = 24 * 80 + self.x as u16;
-            outb(0x3D4, 0x0F);
-            outb(0x3D5, pos & 0xFF);
 
-            outb(0x3D4, 0x0E);
-            outb(0x3D5, (pos >> 8) & 0xFF);
-        }
+        self.update_caret();
     }
 }

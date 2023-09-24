@@ -7,7 +7,7 @@ use super::screen_char::ScreenChar;
 
 type Buffer = &'static mut [[ScreenChar; 80]; 25];
 lazy_static! {
-    static ref BUFFER: Mutex<Buffer> =
+    pub static ref BUFFER: Mutex<Buffer> =
         Mutex::new(unsafe { &mut *(0xb8000 as *mut [[ScreenChar; 80]; 25]) });
 }
 
