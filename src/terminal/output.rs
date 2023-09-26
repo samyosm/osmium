@@ -39,6 +39,7 @@ impl TerminalOutput {
             .call_once(|| Mutex::new(TerminalOutput::new()))
             .lock()
     }
+
     pub fn new() -> Self {
         Self {
             x: 0,

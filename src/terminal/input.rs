@@ -74,8 +74,8 @@ impl TerminalInput {
     }
 
     fn update_caret(&self) {
+        let pos = (24 * 80 + self.x + LABEL_SIZE) as u16;
         unsafe {
-            let pos = (24 * 80 + self.x + LABEL_SIZE) as u16;
             outb(0x3D4, 0x0F);
             outb(0x3D5, pos & 0xFF);
 
@@ -95,9 +95,8 @@ impl TerminalInput {
             }
             // Printable ASCII byte
             0x20..=0x7e => {
-                if self.x > BUFFER_WIDTH - 1 {
-                    // self.terminal
-                    //     .eprint(format_args!("Terminal: Reached input limit.\n"));
+                if self.x + LABEL_SIZE > BUFFER_WIDTH - 1 {
+                    eprintln!("Terminal: Reached input limit.");
                     return;
                 }
 
